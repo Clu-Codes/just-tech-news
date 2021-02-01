@@ -58,20 +58,22 @@ router.get('/:id', (req, res) => {
 
 // POST /api/users
 router.post('/', (req, res) => {
-    // to insert data, use Sequelize's .create() method, which uses key-value pairs
-    // This is similar to `INSERT INTO users (username, email, password) VALUES ('Clu', 'clu@email.com', 'password123');
-
     User.create({
         username: req.body.username,
         email: req.body.email,
         password: req.body.password
     })
-    .then(dbUserData => res.json(dbUserData))
-    .catch(err => {
-        console.log(err);
-        res.status(500).json(err);
+    .then(dbUserData => {
+        req.session.save(() => {
+            req.session.user_id = dbUserData.id;
+            req.session.username = dbUserData.username;
+            req.session.loggedIn = true;
+
+            req.json(dbUserData);
+        })
     });
-});
+});          
+
 // Login Route
 router.post('/login', (req, res) => {
     // expects {email: 'email@gmail.com', password: 'passwordsarehere'}
@@ -88,9 +90,25 @@ router.post('/login', (req, res) => {
         if (!validPassword) {
             return res.status(400).json({ message: 'Incorrect password!' });
         }
-        res.json({ user: dbUserData, message: 'You are now logged in!' });
+        req.session.save(() => {
+            // declare session variables
+            req.session.user_id = dbUserData.id;
+            req.session.username = dbUserData.username;
+            req.session.loggedIn = true;
+
+            res.json({ user: dbUserData, message: 'You are now logged in! '});
+        });
     });
 });
+router.post('/logout', (req, res) => {
+    if (req.session.loggedIn) {
+        req.session.destroy(() => {
+            res.status(204).end();
+        })
+    } else {
+        res.status(404).end();
+    }
+})
 
 // PUT /api/users/1
 router.put('/:id', (req, res) => {
