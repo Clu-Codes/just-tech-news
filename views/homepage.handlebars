@@ -1,0 +1,9 @@
+<ol class="post-list">
+    {{!-- use of each to begin & end the loop; any code between <li> will be iterated based on items in posts (in home-routes) --}}
+    {{#each posts as |post|}}
+    <li>
+        {{!-- To use a partial, use ">" followed by the name of the partial file and the object we're passing to the partial  --}}
+        {{> post-info post }}
+    </li>
+    {{/each}}
+</ol>
